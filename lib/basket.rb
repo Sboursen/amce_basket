@@ -8,34 +8,32 @@ class Basket
     @product_catalogue = product_catalogue
     @delivery_strategy = delivery_strategy
     @offer_strategies = offer_strategies
-    @items = []
+    @line_items = []
   end
 
   def add(product_code)
-    @product_catalogue.fetch(product_code)
-    @items << product_code
+    product_data = @product_catalogue.fetch(product_code)
+
+    line_item = LineItem.new(
+      code: product_code,
+      price: product_data[:price]
+    )
+
+    @line_items << line_item
   end
 
   def total
-    return 0.0 if @items.empty?
+    return 0.0 if @line_items.empty?
 
-    line_items = build_line_items
-    final_ledger = build_final_discount_ledger(line_items)
+    final_ledger = build_final_discount_ledger(@line_items)
 
-    net_subtotal = calculate_net_subtotal(line_items, final_ledger)
+    net_subtotal = calculate_net_subtotal(@line_items, final_ledger)
     delivery_cost = @delivery_strategy.cost_for(net_subtotal)
 
     (net_subtotal + delivery_cost).truncate(2)
   end
 
   private
-
-  def build_line_items
-    @items.map do |code|
-      price = @product_catalogue.fetch(code)[:price]
-      LineItem.new(code: code, price: price)
-    end
-  end
 
   def build_final_discount_ledger(line_items)
     final_ledger = Hash.new { |h, k| h[k] = [] }.compare_by_identity
