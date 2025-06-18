@@ -1,16 +1,15 @@
 # frozen_string_literal: true
 
-require 'bigdecimal'
+require_relative 'delivery_rule'
 
 class TieredDeliveryStrategy
   def initialize(rules)
-    @rules = rules.transform_keys { |key| BigDecimal(key.to_s) }
-    @sorted_thresholds = @rules.keys.sort
+    @rules = rules
   end
 
   def cost_for(subtotal)
-    threshold = @sorted_thresholds.find { |limit| subtotal < limit }
+    matching_rule = @rules.find { |rule| rule.applies_to?(subtotal) }
 
-    @rules.fetch(threshold, 0)
+    matching_rule ? matching_rule.cost : 0.0
   end
 end

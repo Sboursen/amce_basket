@@ -4,6 +4,7 @@ require 'bigdecimal'
 require_relative '../lib/basket'
 require_relative '../lib/strategies/tiered_delivery_strategy'
 require_relative '../lib/strategies/buy_one_get_one_half_price_strategy'
+require_relative '../lib/strategies/delivery_rule'
 require_relative '../lib/discount'
 
 RSpec.describe Basket do
@@ -20,7 +21,15 @@ RSpec.describe Basket do
   context 'when testing with real strategies (integration)' do
     subject(:basket) { described_class.new(product_catalogue, delivery_strategy, offer_strategies) }
 
-    let(:delivery_strategy) { TieredDeliveryStrategy.new({ 50 => 4.95, 90 => 2.95, Float::INFINITY => 0 }) }
+    let(:delivery_strategy) do
+      TieredDeliveryStrategy.new(
+        [
+          DeliveryRule.new(range: (BigDecimal('0')...BigDecimal('50')), cost: 4.95),
+          DeliveryRule.new(range: (BigDecimal('50')...BigDecimal('90')), cost: 2.95),
+          DeliveryRule.new(range: (BigDecimal('90')..), cost: 0.0)
+        ]
+      )
+    end
     let(:offer_strategies) { [BuyOneGetOneHalfPriceStrategy.new('R01')] }
 
     it 'raises an error when adding an invalid product code' do
