@@ -10,49 +10,52 @@ RSpec.describe BuyOneGetOneHalfPriceStrategy do
   let(:another_red_widget) { LineItem.new(code: 'R01', price: 32.95) }
   let(:green_widget) { LineItem.new(code: 'G01', price: 24.95) }
 
-  describe '#apply_to' do
-    it 'does nothing to an empty list of items' do
-      line_items = []
-      strategy.apply_to(line_items)
-      expect(line_items).to be_empty
+  describe '#discounts_for' do
+    it 'returns an empty ledger for an empty list' do
+      expect(strategy.discounts_for([])).to be_empty
     end
 
-    it 'does not apply a discount for a single item' do
+    it 'returns an empty ledger for a single item' do
       line_items = [red_widget]
-      strategy.apply_to(line_items)
-
-      expect(line_items.first.price).to be_within_a_cent_of(red_widget.price)
+      expect(strategy.discounts_for(line_items)).to be_empty
     end
 
-    it 'applies a 50% discount to the second item' do
+    it 'returns a ledger with a discount for the second item in a pair' do # rubocop:disable RSpec/MultipleExpectations
       line_items = [red_widget, another_red_widget]
-      strategy.apply_to(line_items)
+      ledger = strategy.discounts_for(line_items)
 
-      expected_discounted_price = red_widget.price / 2.0
-      expect(line_items.last.price).to be_within_a_cent_of(expected_discounted_price)
+      # The ledger should have one entry.
+      expect(ledger.size).to eq(1)
+      # The key should be the second red widget instance.
+      expect(ledger).to have_key(another_red_widget)
+      # The discount amount should be 50% of the price.
+      expect(ledger[another_red_widget].first.amount).to be_within_a_cent_of(16.475)
     end
 
-    it 'applies the discount for every pair (e.g., 4 items)' do
-      line_items = Array.new(4) { LineItem.new(code: 'R01', price: red_widget.price) }
-      strategy.apply_to(line_items)
-
-      discounted_items = line_items.select { |item| item.price < red_widget.price }
-      expect(discounted_items.count).to eq(2)
+    it 'does not include non-eligible items in the ledger' do
+      line_items = [red_widget, green_widget]
+      expect(strategy.discounts_for(line_items)).to be_empty
     end
 
-    it 'does not discount items with different product codes' do
+    it 'correctly creates the ledger when items are mixed' do # rubocop:disable RSpec/MultipleExpectations
       line_items = [red_widget, green_widget, another_red_widget]
-      strategy.apply_to(line_items)
 
-      expect(line_items.find { |li| li.code == 'G01' }.price).to eq(green_widget.price)
+      ledger = strategy.discounts_for(line_items)
+
+      expect(ledger.size).to eq(1)
+      expect(ledger).to have_key(another_red_widget)
     end
 
-    it 'still applies discount to matching items when mixed with other products' do
-      line_items = [red_widget, green_widget, another_red_widget]
-      strategy.apply_to(line_items)
+    it 'returns a ledger with two discounted items for four eligible items' do # rubocop:disable RSpec/MultipleExpectations
+      line_items = Array.new(4) { LineItem.new(code: 'R01', price: 32.95) }
 
-      expected_discounted_price = red_widget.price / 2.0
-      expect(line_items.last.price).to be_within_a_cent_of(expected_discounted_price)
+      ledger = strategy.discounts_for(line_items)
+
+      # The ledger should have entries for two of the items.
+      expect(ledger.size).to eq(2)
+      # The keys should be the 2nd and 4th items.
+      expect(ledger).to have_key(line_items[1])
+      expect(ledger).to have_key(line_items[3])
     end
   end
 end
