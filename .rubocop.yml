@@ -2,7 +2,7 @@ AllCops:
   NewCops: enable
   TargetRubyVersion: 3.2
 
-require:
+plugins:
   - rubocop-rspec
 
 Style/Documentation:
