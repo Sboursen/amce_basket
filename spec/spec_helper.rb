@@ -10,11 +10,4 @@ RSpec.configure do |config|
   end
 
   config.shared_context_metadata_behavior = :apply_to_host_groups
-
-  RSpec::Matchers.define :be_within_a_cent_of do |expected|
-    match { |actual| (actual - expected).abs < 0.01 }
-    failure_message do |actual|
-      "expected that #{actual} would be within 0.01 of #{expected}"
-    end
-  end
 end

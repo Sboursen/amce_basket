@@ -4,23 +4,29 @@
 # product catalogue and strategies, then runs the example cases provided
 # in the coding challenge.
 
+require 'bigdecimal'
 require_relative 'lib/basket'
-require_relative 'lib/line_item'
 require_relative 'lib/strategies/tiered_delivery_strategy'
 require_relative 'lib/strategies/buy_one_get_one_half_price_strategy'
+require_relative 'lib/strategies/delivery_rule'
 
 # --- System Configuration ---
 
+# Use strings for prices to ensure accurate BigDecimal conversion
 PRODUCT_CATALOGUE = {
-  'R01' => { name: 'Red Widget', price: 32.95 },
-  'G01' => { name: 'Green Widget', price: 24.95 },
-  'B01' => { name: 'Blue Widget', price: 7.95 }
+  'R01' => { name: 'Red Widget', price: '32.95' },
+  'G01' => { name: 'Green Widget', price: '24.95' },
+  'B01' => { name: 'Blue Widget', price: '7.95' }
 }.freeze
 
+# The delivery strategy is now initialized with an array of explicit rule objects.
+# This makes the configuration much clearer and more robust.
 DELIVERY_STRATEGY = TieredDeliveryStrategy.new(
-  50 => 4.95,
-  90 => 2.95,
-  Float::INFINITY => 0
+  [
+    DeliveryRule.new(range: (BigDecimal('0')...BigDecimal('50')), cost: 4.95),
+    DeliveryRule.new(range: (BigDecimal('50')...BigDecimal('90')), cost: 2.95),
+    DeliveryRule.new(range: (BigDecimal('90')..), cost: 0.0)
+  ]
 ).freeze
 
 OFFER_STRATEGIES = [

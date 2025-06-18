@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'bigdecimal'
 require_relative '../discount'
 
 class BuyOneGetOneHalfPriceStrategy
@@ -26,7 +27,9 @@ class BuyOneGetOneHalfPriceStrategy
 
   def add_discount_for_pair(pair, ledger)
     discounted_item = pair.last
-    discount_amount = discounted_item.price / 2.0
+
+    discount_amount = discounted_item.price / BigDecimal('2')
+
     discount = Discount.new(amount: discount_amount, description: 'BOGO 50% off')
 
     ledger[discounted_item] << discount
