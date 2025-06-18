@@ -1,0 +1,9 @@
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 3.2
+
+require:
+  - rubocop-rspec
+
+Style/Documentation:
+  Enabled: false
